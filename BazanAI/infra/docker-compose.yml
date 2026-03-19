@@ -1,39 +1,92 @@
-
 version: '3.8'
 
 services:
   mongo1:
     image: mongo:7.0
     container_name: mongo1
-    command: ["--replSet", "rs0", "--bind_ip_all", "--port", "27017"]
+    command: ["--replSet", "${MONGO_REPLICA_SET_NAME:-rs0}", "--bind_ip_all", "--port", "27017"]
     ports:
       - 27017:27017
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=${MONGO_INITDB_ROOT_USERNAME:-root}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_INITDB_ROOT_PASSWORD:-bazan_secret_password}
     volumes:
       - mongo1_data:/data/db
       - ./mongo-init:/docker-entrypoint-initdb.d
     networks:
       - bazan-network
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  mongo2:
+    image: mongo:7.0
+    container_name: mongo2
+    command: ["--replSet", "${MONGO_REPLICA_SET_NAME:-rs0}", "--bind_ip_all", "--port", "27017"]
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=${MONGO_INITDB_ROOT_USERNAME:-root}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_INITDB_ROOT_PASSWORD:-bazan_secret_password}
+    volumes:
+      - mongo2_data:/data/db
+    networks:
+      - bazan-network
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  mongo3:
+    image: mongo:7.0
+    container_name: mongo3
+    command: ["--replSet", "${MONGO_REPLICA_SET_NAME:-rs0}", "--bind_ip_all", "--port", "27017"]
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=${MONGO_INITDB_ROOT_USERNAME:-root}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_INITDB_ROOT_PASSWORD:-bazan_secret_password}
+    volumes:
+      - mongo3_data:/data/db
+    networks:
+      - bazan-network
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   redis:
-    image: redis:7.2
+    image: redis:7.2-alpine
     container_name: redis
+    command: redis-server --requirepass ${REDIS_PASSWORD:-bazan_redis_password}
     ports:
       - 6379:6379
     volumes:
       - redis_data:/data
     networks:
       - bazan-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-bazan_redis_password}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   rabbitmq:
-    image: rabbitmq:3-management
+    image: rabbitmq:3-management-alpine
     container_name: rabbitmq
     ports:
       - 5672:5672
       - 15672:15672
-    volumes:
-      - ./rabbitmq:/etc/rabbitmq/conf.d
+    environment:
+      - RABBITMQ_DEFAULT_USER=${RABBITMQ_DEFAULT_USER:-bazan_user}
+      - RABBITMQ_DEFAULT_PASS=${RABBITMQ_DEFAULT_PASS:-bazan_password}
     networks:
       - bazan-network
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "check_running"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   qdrant:
     image: qdrant/qdrant:v1.7.4
@@ -44,6 +97,11 @@ services:
       - qdrant_data:/qdrant/storage
     networks:
       - bazan-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:6333/healthz"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   minio:
     image: minio/minio
@@ -52,10 +110,18 @@ services:
     ports:
       - 9000:9000
       - 9001:9001
+    environment:
+      - MINIO_ROOT_USER=${MINIO_ROOT_USER:-minioadmin}
+      - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD:-minioadmin}
     volumes:
       - minio_data:/data
     networks:
       - bazan-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   seq:
     image: datalust/seq:latest
@@ -64,20 +130,22 @@ services:
       - 5341:5341
       - 8081:80
     environment:
-      - ACCEPT_EULA=Y
+      - ACCEPT_EULA=${ACCEPT_EULA:-Y}
     networks:
       - bazan-network
 
+  # Core Services
   api-gateway:
     build:
-      context: ../src/Services/BazanAI.Gateway/BazanAI.Gateway
-      dockerfile: Dockerfile
+      context: ..
+      dockerfile: src/Services/BazanAI.Gateway/BazanAI.Gateway/Dockerfile
     container_name: api-gateway
     ports:
       - 8080:8080
     depends_on:
       - identity-svc
       - conversation-svc
+      - orchestrator-svc
     networks:
       - bazan-network
 
@@ -86,35 +154,146 @@ services:
       context: ..
       dockerfile: src/Services/BazanAI.Identity/BazanAI.Identity.API/Dockerfile
     container_name: identity-svc
-    ports:
-      - 5001:8080
     environment:
-      - ConnectionStrings__MongoDb=mongodb://mongo1:27017
+      - ConnectionStrings__MongoDb=${MONGO_CONNECTION_STRING:-mongodb://mongo1:27017,mongo2:27017,mongo3:27017/?replicaSet=rs0}
+      - ConnectionStrings__Redis=${REDIS_CONNECTION_STRING:-redis:6379,password=bazan_redis_password}
     networks:
       - bazan-network
+    depends_on:
+      mongo1:
+        condition: service_healthy
 
   conversation-svc:
     build:
       context: ..
       dockerfile: src/Services/BazanAI.Conversations/BazanAI.Conversations.API/Dockerfile
     container_name: conversation-svc
-    ports:
-      - 5002:8080
+    environment:
+      - ConnectionStrings__MongoDb=${MONGO_CONNECTION_STRING:-mongodb://mongo1:27017,mongo2:27017,mongo3:27017/?replicaSet=rs0}
     networks:
       - bazan-network
+    depends_on:
+      mongo1:
+        condition: service_healthy
 
-  ai-orchestrator:
+  orchestrator-svc:
     build:
       context: ..
       dockerfile: src/Services/BazanAI.Orchestrator/BazanAI.Orchestrator/Dockerfile
-    container_name: ai-orchestrator
-    ports:
-      - 5010:8080
+    container_name: orchestrator-svc
+    environment:
+      - AI_PROVIDER=${AI_PROVIDER:-OpenAI}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - OPENAI_MODEL=${OPENAI_MODEL:-gpt-4-turbo-preview}
+      - ConnectionStrings__Redis=${REDIS_CONNECTION_STRING:-redis:6379,password=bazan_redis_password}
+      - ConnectionStrings__RabbitMQ=${RABBITMQ_CONNECTION_STRING:-amqp://bazan_user:bazan_password@rabbitmq:5672}
+    networks:
+      - bazan-network
+    depends_on:
+      - redis
+      - rabbitmq
+
+  agronomy-svc:
+    build:
+      context: ..
+      dockerfile: src/Services/BazanAI.Agronomy/BazanAI.Agronomy.API/Dockerfile
+    container_name: agronomy-svc
+    environment:
+      - ConnectionStrings__MongoDb=${MONGO_CONNECTION_STRING:-mongodb://mongo1:27017,mongo2:27017,mongo3:27017/?replicaSet=rs0}
+    networks:
+      - bazan-network
+    depends_on:
+      mongo1:
+        condition: service_healthy
+
+  market-svc:
+    build:
+      context: ..
+      dockerfile: src/Services/BazanAI.Market/BazanAI.Market.API/Dockerfile
+    container_name: market-svc
+    environment:
+      - ConnectionStrings__MongoDb=${MONGO_CONNECTION_STRING:-mongodb://mongo1:27017,mongo2:27017,mongo3:27017/?replicaSet=rs0}
+    networks:
+      - bazan-network
+    depends_on:
+      mongo1:
+        condition: service_healthy
+
+  notification-svc:
+    build:
+      context: ..
+      dockerfile: src/Services/BazanAI.Notifications/src/Dockerfile
+    container_name: notification-svc
+    environment:
+      - ConnectionStrings__RabbitMQ=${RABBITMQ_CONNECTION_STRING:-amqp://bazan_user:bazan_password@rabbitmq:5672}
+    networks:
+      - bazan-network
+    depends_on:
+      - rabbitmq
+
+  media-svc:
+    build:
+      context: ..
+      dockerfile: src/Services/BazanAI.Media/src/Dockerfile
+    container_name: media-svc
+    environment:
+      - S3__Endpoint=http://minio:9000
+      - S3__AccessKey=${MINIO_ROOT_USER:-minioadmin}
+      - S3__SecretKey=${MINIO_ROOT_PASSWORD:-minioadmin}
+    networks:
+      - bazan-network
+    depends_on:
+      - minio
+
+  weather-svc:
+    build:
+      context: ..
+      dockerfile: src/Services/BazanAI.Weather/src/Dockerfile
+    container_name: weather-svc
+    environment:
+      - OPENWEATHER_API_KEY=${OPENWEATHER_API_KEY}
     networks:
       - bazan-network
 
+  iot-ingestion-svc:
+    build:
+      context: ..
+      dockerfile: src/Services/BazanAI.IoTIngestion/src/Dockerfile
+    container_name: iot-ingestion-svc
+    networks:
+      - bazan-network
+
+  scheduler-svc:
+    build:
+      context: ..
+      dockerfile: src/Services/BazanAI.Scheduler/src/Dockerfile
+    container_name: scheduler-svc
+    environment:
+      - ConnectionStrings__MongoDb=${MONGO_CONNECTION_STRING:-mongodb://mongo1:27017,mongo2:27017,mongo3:27017/?replicaSet=rs0}
+    networks:
+      - bazan-network
+    depends_on:
+      mongo1:
+        condition: service_healthy
+
+  knowledge-rag-svc:
+    build:
+      context: ..
+      dockerfile: src/Python/bazan-knowledge-rag/Dockerfile
+    container_name: knowledge-rag-svc
+    environment:
+      - QDRANT_URL=http://qdrant:6333
+      - QDRANT_API_KEY=${QDRANT_API_KEY}
+    networks:
+      - bazan-network
+    depends_on:
+      qdrant:
+        condition: service_healthy
+
 volumes:
   mongo1_data:
+  mongo2_data:
+  mongo3_data:
   redis_data:
   qdrant_data:
   minio_data:

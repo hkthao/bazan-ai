@@ -6,8 +6,8 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
   <ItemGroup>
-    <ProjectReference Include="../../SharedKernel/BazanAI.SharedKernel/BazanAI.SharedKernel.csproj" />
-    <ProjectReference Include="../../SharedKernel/BazanAI.Infrastructure.Common/BazanAI.Infrastructure.Common.csproj" />
+    <ProjectReference Include="../../../SharedKernel/BazanAI.SharedKernel/BazanAI.SharedKernel.csproj" />
+    <ProjectReference Include="../../../SharedKernel/BazanAI.Infrastructure.Common/BazanAI.Infrastructure.Common.csproj" />
     <PackageReference Include="Serilog.Extensions.Hosting" Version="8.0.0" />
   </ItemGroup>
 </Project>
