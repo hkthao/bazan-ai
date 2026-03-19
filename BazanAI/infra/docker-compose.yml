@@ -1,0 +1,124 @@
+
+version: '3.8'
+
+services:
+  mongo1:
+    image: mongo:7.0
+    container_name: mongo1
+    command: ["--replSet", "rs0", "--bind_ip_all", "--port", "27017"]
+    ports:
+      - 27017:27017
+    volumes:
+      - mongo1_data:/data/db
+      - ./mongo-init:/docker-entrypoint-initdb.d
+    networks:
+      - bazan-network
+
+  redis:
+    image: redis:7.2
+    container_name: redis
+    ports:
+      - 6379:6379
+    volumes:
+      - redis_data:/data
+    networks:
+      - bazan-network
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    ports:
+      - 5672:5672
+      - 15672:15672
+    volumes:
+      - ./rabbitmq:/etc/rabbitmq/conf.d
+    networks:
+      - bazan-network
+
+  qdrant:
+    image: qdrant/qdrant:v1.7.4
+    container_name: qdrant
+    ports:
+      - 6333:6333
+    volumes:
+      - qdrant_data:/qdrant/storage
+    networks:
+      - bazan-network
+
+  minio:
+    image: minio/minio
+    container_name: minio
+    command: server /data --console-address ":9001"
+    ports:
+      - 9000:9000
+      - 9001:9001
+    volumes:
+      - minio_data:/data
+    networks:
+      - bazan-network
+
+  seq:
+    image: datalust/seq:latest
+    container_name: seq
+    ports:
+      - 5341:5341
+      - 8081:80
+    environment:
+      - ACCEPT_EULA=Y
+    networks:
+      - bazan-network
+
+  api-gateway:
+    build:
+      context: ../src/Services/BazanAI.Gateway/BazanAI.Gateway
+      dockerfile: Dockerfile
+    container_name: api-gateway
+    ports:
+      - 8080:8080
+    depends_on:
+      - identity-svc
+      - conversation-svc
+    networks:
+      - bazan-network
+
+  identity-svc:
+    build:
+      context: ..
+      dockerfile: src/Services/BazanAI.Identity/BazanAI.Identity.API/Dockerfile
+    container_name: identity-svc
+    ports:
+      - 5001:8080
+    environment:
+      - ConnectionStrings__MongoDb=mongodb://mongo1:27017
+    networks:
+      - bazan-network
+
+  conversation-svc:
+    build:
+      context: ..
+      dockerfile: src/Services/BazanAI.Conversations/BazanAI.Conversations.API/Dockerfile
+    container_name: conversation-svc
+    ports:
+      - 5002:8080
+    networks:
+      - bazan-network
+
+  ai-orchestrator:
+    build:
+      context: ..
+      dockerfile: src/Services/BazanAI.Orchestrator/BazanAI.Orchestrator/Dockerfile
+    container_name: ai-orchestrator
+    ports:
+      - 5010:8080
+    networks:
+      - bazan-network
+
+volumes:
+  mongo1_data:
+  redis_data:
+  qdrant_data:
+  minio_data:
+
+networks:
+  bazan-network:
+    driver: bridge

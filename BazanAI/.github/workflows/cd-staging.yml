@@ -1,0 +1,14 @@
+
+name: CD Staging
+on:
+  push:
+    branches: [ develop ]
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Build and Push
+      run: echo "Building and pushing images..."
+    - name: Deploy
+      run: echo "Deploying to staging..."

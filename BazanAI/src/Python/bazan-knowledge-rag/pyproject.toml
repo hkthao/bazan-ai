@@ -1,0 +1,23 @@
+
+[project]
+name = "bazan-knowledge-rag"
+version = "0.1.0"
+description = "RAG Service for Bazan AI"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi",
+    "uvicorn",
+    "qdrant-client",
+    "openai",
+    "pymupdf",
+    "minio",
+    "structlog",
+    "pydantic-settings",
+    "python-multipart"
+]
+
+[tool.black]
+line-length = 88
+
+[tool.ruff]
+line-length = 88

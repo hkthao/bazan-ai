@@ -1,0 +1,58 @@
+
+{
+  "ReverseProxy": {
+    "Routes": {
+      "auth-route": {
+        "ClusterId": "identity-cluster",
+        "Match": { "Path": "/api/v1/auth/{**catch-all}" }
+      },
+      "farmers-route": {
+        "ClusterId": "identity-cluster",
+        "Match": { "Path": "/api/v1/farmers/{**catch-all}" }
+      },
+      "sessions-route": {
+        "ClusterId": "conversation-cluster",
+        "Match": { "Path": "/api/v1/sessions/{**catch-all}" }
+      },
+      "agronomy-route": {
+        "ClusterId": "agronomy-cluster",
+        "Match": { "Path": "/api/v1/agronomy/{**catch-all}" }
+      },
+      "market-route": {
+        "ClusterId": "market-cluster",
+        "Match": { "Path": "/api/v1/market/{**catch-all}" }
+      },
+      "hub-route": {
+        "ClusterId": "orchestrator-cluster",
+        "Match": { "Path": "/hub/{**catch-all}" }
+      }
+    },
+    "Clusters": {
+      "identity-cluster": {
+        "Destinations": {
+          "destination1": { "Address": "http://identity-svc:5001" }
+        }
+      },
+      "conversation-cluster": {
+        "Destinations": {
+          "destination1": { "Address": "http://conversation-svc:5002" }
+        }
+      },
+      "agronomy-cluster": {
+        "Destinations": {
+          "destination1": { "Address": "http://agronomy-svc:5004" }
+        }
+      },
+      "market-cluster": {
+        "Destinations": {
+          "destination1": { "Address": "http://market-svc:5005" }
+        }
+      },
+      "orchestrator-cluster": {
+        "Destinations": {
+          "destination1": { "Address": "http://ai-orchestrator:5010" }
+        }
+      }
+    }
+  }
+}

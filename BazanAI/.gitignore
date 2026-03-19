@@ -1,0 +1,16 @@
+
+bin/
+obj/
+.vs/
+.idea/
+*.user
+*.suo
+*.userprefs
+.DS_Store
+__pycache__/
+*.pyc
+.venv/
+.env
+appsettings.Development.json
+coverage/
+TestResults/
