@@ -10,7 +10,7 @@ test:
 	pytest src/Python/bazan-knowledge-rag
 
 migrate:
-	docker compose -f infra/docker-compose.yml exec mongo1 mongosh /docker-entrypoint-initdb.d/init-replica.js
+	docker compose -f infra/docker-compose.yml exec mongo1 mongosh /mongo-init/init-replica.js
 
 logs:
 	docker compose -f infra/docker-compose.yml logs -f
