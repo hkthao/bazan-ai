@@ -12,4 +12,9 @@ public abstract class MongoDbBase
         var client = new MongoClient(connectionString);
         Database = client.GetDatabase(databaseName);
     }
+
+    protected MongoDbBase(IMongoDatabase database)
+    {
+        Database = database;
+    }
 }
