@@ -7,12 +7,9 @@ services:
     command: ["--replSet", "${MONGO_REPLICA_SET_NAME:-rs0}", "--bind_ip_all", "--port", "27017"]
     ports:
       - 27017:27017
-    environment:
-      - MONGO_INITDB_ROOT_USERNAME=${MONGO_INITDB_ROOT_USERNAME:-root}
-      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_INITDB_ROOT_PASSWORD:-bazan_secret_password}
     volumes:
       - mongo1_data:/data/db
-      - ./mongo-init:/docker-entrypoint-initdb.d
+      - ./mongo-init:/mongo-init
     networks:
       - bazan-network
     healthcheck:
@@ -25,9 +22,6 @@ services:
     image: mongo:7.0
     container_name: mongo2
     command: ["--replSet", "${MONGO_REPLICA_SET_NAME:-rs0}", "--bind_ip_all", "--port", "27017"]
-    environment:
-      - MONGO_INITDB_ROOT_USERNAME=${MONGO_INITDB_ROOT_USERNAME:-root}
-      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_INITDB_ROOT_PASSWORD:-bazan_secret_password}
     volumes:
       - mongo2_data:/data/db
     networks:
@@ -42,9 +36,6 @@ services:
     image: mongo:7.0
     container_name: mongo3
     command: ["--replSet", "${MONGO_REPLICA_SET_NAME:-rs0}", "--bind_ip_all", "--port", "27017"]
-    environment:
-      - MONGO_INITDB_ROOT_USERNAME=${MONGO_INITDB_ROOT_USERNAME:-root}
-      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_INITDB_ROOT_PASSWORD:-bazan_secret_password}
     volumes:
       - mongo3_data:/data/db
     networks:
@@ -98,7 +89,7 @@ services:
     networks:
       - bazan-network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:6333/healthz"]
+      test: ["CMD", "bash", "-c", "cat < /dev/tcp/localhost/6333"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -131,6 +122,7 @@ services:
       - 8081:80
     environment:
       - ACCEPT_EULA=${ACCEPT_EULA:-Y}
+      - SEQ_FIRSTRUN_NOAUTHENTICATION=true
     networks:
       - bazan-network
 
