@@ -14,3 +14,4 @@ __pycache__/
 appsettings.Development.json
 coverage/
 TestResults/
+\n# JWT Keys\n*.pem\nsecrets/\n
