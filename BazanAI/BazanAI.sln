@@ -93,6 +93,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BazanAI.Gateway", "src\Serv
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BazanAI.Infrastructure.Common.Tests", "tests\Unit\BazanAI.Infrastructure.Common.Tests\BazanAI.Infrastructure.Common.Tests.csproj", "{CF4A39B7-3674-468C-AFF6-4D1E1F84462D}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BazanAI.Gateway.Tests", "tests\Unit\BazanAI.Gateway.Tests\BazanAI.Gateway.Tests.csproj", "{A3DE61A8-D090-4B63-AB3A-88223F8F33A1}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -211,6 +213,10 @@ Global
 		{CF4A39B7-3674-468C-AFF6-4D1E1F84462D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{CF4A39B7-3674-468C-AFF6-4D1E1F84462D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{CF4A39B7-3674-468C-AFF6-4D1E1F84462D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A3DE61A8-D090-4B63-AB3A-88223F8F33A1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A3DE61A8-D090-4B63-AB3A-88223F8F33A1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A3DE61A8-D090-4B63-AB3A-88223F8F33A1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A3DE61A8-D090-4B63-AB3A-88223F8F33A1}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{1B548453-EB70-44FB-AA19-EF16CD419C50} = {56BD96F6-DDFE-4599-A45B-51096D0BFB22}
@@ -256,5 +262,6 @@ Global
 		{B6651000-F60C-419D-B9AC-78BA98EEAD12} = {90872E2B-D728-477F-BC64-D952C02B97D2}
 		{AC6660AC-668B-414A-B3EE-232574A875E0} = {B6651000-F60C-419D-B9AC-78BA98EEAD12}
 		{CF4A39B7-3674-468C-AFF6-4D1E1F84462D} = {1B548453-EB70-44FB-AA19-EF16CD419C50}
+		{A3DE61A8-D090-4B63-AB3A-88223F8F33A1} = {1B548453-EB70-44FB-AA19-EF16CD419C50}
 	EndGlobalSection
 EndGlobal

@@ -89,5 +89,55 @@ BazanAI/
 └── README.md               # Project overview
 ```
 
+## Automated Developer Workflow
+When instructed to "work on issue #X" or "implement feature Y", follow this strict workflow to simulate a Senior Developer's process:
+
+### 1. Preparation & Branching
+1.  **Read Context:** Retrieve issue details using `gh issue view {id}`. Read related `docs/` or existing code to understand the requirement.
+2.  **Sync Main:** Ensure local main is up-to-date: `git checkout main && git pull origin main`.
+3.  **Create Branch:**
+    -   Feature: `git checkout -b feature/{id}-{short-desc}` (e.g., `feature/5-ci-pipeline`)
+    -   Bugfix: `git checkout -b bugfix/{id}-{short-desc}` (e.g., `bugfix/12-login-error`)
+    -   Naming: Lowercase, kebab-case, include ID.
+
+### 2. Implementation & Verification
+1.  **Coding Standards:** Adhere to Clean Architecture, naming conventions, and project style.
+2.  **Testing:**
+    -   **MUST** add or update Unit Tests (`tests/Unit/`) for all new logic.
+    -   Run tests locally: `dotnet test {Project}` or `make test`.
+    -   Ensure build passes: `dotnet build`.
+3.  **Commit Strategy:**
+    -   Use Conventional Commits: `feat(scope): description`, `fix(scope): description`.
+    -   Keep commits granular and logical.
+
+### 3. Pull Request & Review
+1.  **Push:** `git push origin {branch-name}`.
+2.  **Create PR:**
+    -   Command: `gh pr create --base main --head {branch-name} --title "[{TYPE}-{ID}] {Description}" --body "{Template}"`
+    -   Template:
+        ```markdown
+        ## Changes
+        - [Concise list of changes]
+
+        ## Related
+        - Closes #{ID}
+
+        ## Checklist
+        - [x] Unit tests added/updated
+        - [x] Manual testing verified
+        - [x] No PII/Secrets exposed
+        ```
+3.  **Self-Review:**
+    -   Verify diffs.
+    -   Check for "dummy" code or "TODOs".
+    -   Ensure CI checks pass (simulate or check `gh pr checks`).
+
+### 4. Merge & Cleanup
+1.  **Wait for Approval:** Ask user for confirmation to merge if critical.
+2.  **Merge:**
+    -   Command: `gh pr merge {pr-number} --squash --delete-branch`
+    -   Strategy: **Squash Merge** to keep `main` clean.
+3.  **Sync:** `git checkout main && git pull origin main`.
+
 ---
 *This file is maintained by Gemini CLI to ensure consistent development patterns.*
