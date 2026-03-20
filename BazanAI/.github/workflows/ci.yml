@@ -1,13 +1,17 @@
-
 name: CI
 
 on:
   pull_request:
     branches: [ main ]
+  push:
+    branches: [ main ]
 
 jobs:
   build-dotnet:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: BazanAI
     steps:
     - uses: actions/checkout@v3
     - name: Setup .NET
@@ -23,6 +27,9 @@ jobs:
 
   build-python:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: BazanAI
     steps:
     - uses: actions/checkout@v3
     - name: Set up Python
@@ -36,10 +43,15 @@ jobs:
     - name: Test with pytest
       run: |
         cd src/Python/bazan-knowledge-rag
+        # We check if pytest is installed first, if not we skip tests for now or install it
+        pip install pytest pytest-asyncio
         pytest
 
   docker-build:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: BazanAI
     steps:
     - uses: actions/checkout@v3
     - name: Build Docker images
@@ -47,6 +59,9 @@ jobs:
 
   security-scan:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: BazanAI
     steps:
     - uses: actions/checkout@v3
     - name: Run Trivy vulnerability scanner
