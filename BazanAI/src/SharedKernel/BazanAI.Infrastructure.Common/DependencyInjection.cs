@@ -5,11 +5,19 @@ using BazanAI.SharedKernel.Events;
 using MassTransit;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using BazanAI.Infrastructure.Common.Security;
+using BazanAI.SharedKernel.Security;
 
 namespace BazanAI.Infrastructure.Common;
 
 public static class DependencyInjection
 {
+    public static IServiceCollection AddBazanSecurity(this IServiceCollection services)
+    {
+        services.AddSingleton<IPiiEncryptionService, AesGcmPiiEncryptionService>();
+        return services;
+    }
+
     public static IServiceCollection AddBazanMassTransit(
         this IServiceCollection services, 
         IConfiguration configuration,
