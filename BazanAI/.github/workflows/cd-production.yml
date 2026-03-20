@@ -1,4 +1,3 @@
-
 name: CD Production
 on:
   push:
@@ -7,6 +6,9 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     environment: production
+    defaults:
+      run:
+        working-directory: BazanAI
     steps:
     - uses: actions/checkout@v3
     - name: Deploy

@@ -1,4 +1,3 @@
-
 name: Weekly Security Scan
 on:
   schedule:
@@ -6,6 +5,9 @@ on:
 jobs:
   snyk:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: BazanAI
     steps:
     - uses: actions/checkout@v3
     - name: Run Snyk to check for vulnerabilities
